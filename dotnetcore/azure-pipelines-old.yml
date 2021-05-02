@@ -1,0 +1,14 @@
+
+trigger:
+- main
+
+resources:
+- repo: self
+
+steps:
+- task: Docker@2
+  inputs:
+    containerRegistry: 'INGTESTACR'
+    repository: 'dotnetapp'
+    command: 'buildAndPush'
+    Dockerfile: '**/Dockerfile'

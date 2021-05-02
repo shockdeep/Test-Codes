@@ -1,0 +1,61 @@
+
+trigger:
+- main
+
+resources:
+- repo: self
+
+variables:
+  # Container registry service connection established during pipeline creation
+  dockerRegistryServiceConnection: 'c06eca0b-b82b-47e0-9cfe-c6be9496745d'
+  imageRepository: 'vritdotnetcore'
+  containerRegistry: 'regisrtyvijal.azurecr.io'
+  dockerfilePath: '$(Build.SourcesDirectory)/Dockerfile'
+  tag: '$(Build.BuildId)'
+
+  # Agent VM image name
+  vmImageName: 'ubuntu-latest'
+
+stages:
+- stage: Build
+  displayName: Build and push stage
+  jobs:
+  - job: Build
+    displayName: Build
+    pool:
+      vmImage: $(vmImageName)
+    steps:
+    - task: Docker@2
+      displayName: Build and push an image to container registry
+      inputs:
+        command: buildAndPush
+        repository: $(imageRepository)
+        dockerfile: $(dockerfilePath)
+        containerRegistry: $(dockerRegistryServiceConnection)
+        tags: |
+          $(tag)
+
+- stage: Deploy
+  displayName: Deploy to AKS
+  jobs:
+  - job: Deploy
+    displayName: Deploy
+    pool:
+      vmImage: $(vmImageName)
+    steps:
+    - task: HelmInstaller@0
+      inputs:
+        helmVersion: '3.5.2'
+        installKubectl: true
+
+    - task: HelmDeploy@0
+      inputs:
+        connectionType: 'Azure Resource Manager'
+        azureSubscription: 'Pay-As-You-Go (88055b8f-df41-4259-b36b-7da41d56d9c2)'
+        azureResourceGroup: 'RG-VJAL'
+        kubernetesCluster: 'kuberphy'
+        namespace: 'default'
+        command: 'upgrade'
+        chartType: 'FilePath'
+        chartPath: './helm-chart'
+        releaseName: 'dotnetapp'

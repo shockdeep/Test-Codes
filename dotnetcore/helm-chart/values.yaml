@@ -1,0 +1,7 @@
+webserver:
+  name: app1
+  replicas: 1
+  service: app1
+  port: 80
+  image: regisrtyvijal.azurecr.io/vritdotnetcore:latest
+
